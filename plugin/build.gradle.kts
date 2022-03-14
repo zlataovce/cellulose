@@ -22,7 +22,7 @@ dependencies {
 }
 
 tasks.withType<ShadowJar> {
-    minimize()
+    // minimize()
 
     dependencies {
         // remove transitive guava dependency to save some space

@@ -27,7 +27,7 @@ class CellulosePlugin : JavaPlugin(), Cellulose {
     }
 
     override fun onLoad() {
-        scriptsFolder.listFiles { file -> file.isFile && file.name.endsWith(".kts") }?.forEach { file ->
+        scriptsFolder.listFiles { file -> file.isFile && file.name.endsWith(".cell.kts") }?.forEach { file ->
             loadScript(file, false)?.also { script ->
                 try {
                     script.javaClass.getDeclaredMethod("load").also { it.isAccessible = true }.invoke(script)
@@ -72,7 +72,7 @@ class CellulosePlugin : JavaPlugin(), Cellulose {
         if (!silent) {
             if (result.isError()) {
                 logger.severe("Compilation of script '${file.name}' failed.")
-                result.reports.forEach { it.exception?.printStackTrace() }
+                result.reports.forEach { if (it.severity == ScriptDiagnostic.Severity.ERROR) logger.severe(it.render()) }
             } else {
                 logger.info("Compiled and executed script '${file.name}' in ${time / 1000} seconds.")
             }
@@ -90,7 +90,7 @@ class CellulosePlugin : JavaPlugin(), Cellulose {
         if (!silent) {
             if (result.isError()) {
                 logger.severe("Compilation of script ${if (name != null) "'$name' " else ""}failed.")
-                result.reports.forEach { it.exception?.printStackTrace() }
+                result.reports.forEach { if (it.severity == ScriptDiagnostic.Severity.ERROR) logger.severe(it.render()) }
             } else {
                 logger.info("Compiled and executed script ${if (name != null) "'$name' " else ""}in ${time / 1000} seconds.")
             }
