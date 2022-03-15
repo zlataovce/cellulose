@@ -5,17 +5,21 @@ import kotlin.script.experimental.api.*
 import kotlin.script.experimental.dependencies.*
 import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
 import kotlin.script.experimental.jvm.JvmDependency
-import kotlin.script.experimental.jvm.dependenciesFromCurrentContext
+import kotlin.script.experimental.jvm.dependenciesFromClassloader
 import kotlin.script.experimental.jvm.jvm
 
 private val resolver = CompoundDependenciesResolver(FileSystemDependenciesResolver(), MavenDependenciesResolver())
 
-object CompilationConfiguration : ScriptCompilationConfiguration(
+internal object CompilationConfiguration : ScriptCompilationConfiguration(
     {
         defaultImports(DependsOn::class, Repository::class)
+        defaultImports.append(
+            "me.kcra.cellulose.script.extension.*",
+            "cloud.commandframework.kotlin.extension.*"
+        )
 
         jvm {
-            dependenciesFromCurrentContext(wholeClasspath = true)
+            dependenciesFromClassloader(classLoader = javaClass.classLoader, wholeClasspath = true)
         }
 
         refineConfiguration {

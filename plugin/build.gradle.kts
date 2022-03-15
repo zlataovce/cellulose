@@ -19,6 +19,10 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
 
     compileOnly("io.papermc.paper:paper-api:1.18.2-R0.1-SNAPSHOT")
+
+    implementation("cloud.commandframework:cloud-paper:1.6.2")
+    implementation("cloud.commandframework:cloud-kotlin-coroutines:1.6.2")
+    implementation("cloud.commandframework:cloud-kotlin-extensions:1.6.2")
 }
 
 tasks.withType<ShadowJar> {
