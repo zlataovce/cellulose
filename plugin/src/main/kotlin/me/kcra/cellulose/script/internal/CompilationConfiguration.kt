@@ -1,6 +1,7 @@
 package me.kcra.cellulose.script.internal
 
 import kotlinx.coroutines.runBlocking
+import me.kcra.cellulose.CellulosePlugin
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.dependencies.*
 import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
@@ -19,7 +20,7 @@ internal object CompilationConfiguration : ScriptCompilationConfiguration(
         )
 
         jvm {
-            dependenciesFromClassloader(classLoader = javaClass.classLoader, wholeClasspath = true)
+            dependenciesFromClassloader(classLoader = CellulosePlugin::class.java.classLoader, wholeClasspath = true)
         }
 
         refineConfiguration {

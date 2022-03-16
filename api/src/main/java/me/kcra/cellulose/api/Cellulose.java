@@ -27,8 +27,8 @@ public interface Cellulose {
     List<Object> getLoadedScripts();
 
     @Nullable
-    Object loadScript(@NotNull File file, boolean silent);
+    Object loadScript(@NotNull File file, boolean silent, boolean handleEnable);
 
     @Nullable
-    Object loadScript(@NotNull String script, @Nullable String name, boolean silent);
+    Object loadScript(@NotNull String script, @Nullable String name, boolean silent, boolean handleEnable);
 }

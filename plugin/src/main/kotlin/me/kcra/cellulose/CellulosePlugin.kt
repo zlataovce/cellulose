@@ -1,5 +1,6 @@
 package me.kcra.cellulose
 
+import cloud.commandframework.Command
 import cloud.commandframework.CommandManager
 import cloud.commandframework.execution.CommandExecutionCoordinator
 import cloud.commandframework.paper.PaperCommandManager
@@ -16,14 +17,17 @@ import kotlin.script.experimental.host.toScriptSource
 import kotlin.script.experimental.jvm.util.isError
 import kotlin.script.experimental.jvmhost.BasicJvmScriptingHost
 import kotlin.script.experimental.jvmhost.createJvmCompilationConfigurationFromTemplate
+import kotlin.script.experimental.jvmhost.createJvmEvaluationConfigurationFromTemplate
 import kotlin.system.measureTimeMillis
 
 class CellulosePlugin : JavaPlugin(), Cellulose {
     private val compilationConfiguration: ScriptCompilationConfiguration = createJvmCompilationConfigurationFromTemplate<ScriptBase>()
+    private val evaluationConfiguration: ScriptEvaluationConfiguration = createJvmEvaluationConfigurationFromTemplate<ScriptBase>()
     private val loadedScripts: MutableList<ScriptBase> = mutableListOf()
+    private val commandQueue: MutableList<(CommandManager<CommandSender>) -> Command<CommandSender>> = mutableListOf()
     private val scriptingHost = BasicJvmScriptingHost()
 
-    internal lateinit var commandManager: CommandManager<CommandSender>
+    private lateinit var commandManager: CommandManager<CommandSender>
 
     companion object {
         @JvmStatic
@@ -36,13 +40,7 @@ class CellulosePlugin : JavaPlugin(), Cellulose {
 
     override fun onLoad() {
         scriptsFolder.listFiles { file -> file.isFile && file.name.endsWith(".cell.kts") }?.forEach { file ->
-            loadScript(file, false)?.also { script ->
-                try {
-                    script.javaClass.getDeclaredMethod("load").also { it.isAccessible = true }.invoke(script)
-                } catch (ignored: NoSuchMethodException) {
-                    // ignored
-                }
-            }
+            loadScript(file, silent = false, handleEnable = false)
         }
     }
 
@@ -53,34 +51,23 @@ class CellulosePlugin : JavaPlugin(), Cellulose {
             Function.identity(),
             Function.identity()
         )
+        commandQueue.forEach { it(commandManager) }
+        commandQueue.clear()
 
-        loadedScripts.forEach { script ->
-            Bukkit.getPluginManager().registerEvents(script, this)
-            try {
-                script.javaClass.getDeclaredMethod("enable").also { it.isAccessible = true }.invoke(script)
-            } catch (ignored: NoSuchMethodException) {
-                // ignored
-            }
-        }
+        loadedScripts.forEach { it.enableAction() }
     }
 
     override fun onDisable() {
-        loadedScripts.forEach { script ->
-            try {
-                script.javaClass.getDeclaredMethod("disable").also { it.isAccessible = true }.invoke(script)
-            } catch (ignored: NoSuchMethodException) {
-                // ignored
-            }
-        }
+        loadedScripts.forEach { it.disableAction() }
     }
 
     override fun getScriptsFolder(): File = dataFolder.resolve("scripts").also { it.mkdirs() }
     override fun getLoadedScripts(): MutableList<Any> = Collections.unmodifiableList(loadedScripts)
 
-    override fun loadScript(file: File, silent: Boolean): ScriptBase? {
+    override fun loadScript(file: File, silent: Boolean, handleEnable: Boolean): ScriptBase? {
         var result: ResultWithDiagnostics<EvaluationResult>
         val time: Long = measureTimeMillis {
-            result = scriptingHost.eval(file.toScriptSource(), compilationConfiguration, null)
+            result = scriptingHost.eval(file.toScriptSource(), compilationConfiguration, evaluationConfiguration)
         }
 
         if (!silent) {
@@ -92,13 +79,20 @@ class CellulosePlugin : JavaPlugin(), Cellulose {
             }
         }
 
-        return (result.valueOrNull()?.returnValue?.scriptInstance as ScriptBase?)?.also { loadedScripts.add(it) }
+        return (result.valueOrNull()?.returnValue?.scriptInstance as ScriptBase?)?.also {
+            loadedScripts.add(it)
+            Bukkit.getPluginManager().registerEvents(it, this)
+            it.loadAction()
+            if (handleEnable) {
+                it.enableAction()
+            }
+        }
     }
 
-    override fun loadScript(script: String, name: String?, silent: Boolean): ScriptBase? {
+    override fun loadScript(script: String, name: String?, silent: Boolean, handleEnable: Boolean): ScriptBase? {
         var result: ResultWithDiagnostics<EvaluationResult>
         val time: Long = measureTimeMillis {
-            result = scriptingHost.eval(script.toScriptSource(name), compilationConfiguration, null)
+            result = scriptingHost.eval(script.toScriptSource(name), compilationConfiguration, evaluationConfiguration)
         }
 
         if (!silent) {
@@ -110,6 +104,21 @@ class CellulosePlugin : JavaPlugin(), Cellulose {
             }
         }
 
-        return (result.valueOrNull()?.returnValue?.scriptInstance as ScriptBase?)?.also { loadedScripts.add(it) }
+        return (result.valueOrNull()?.returnValue?.scriptInstance as ScriptBase?)?.also {
+            loadedScripts.add(it)
+            Bukkit.getPluginManager().registerEvents(it, this)
+            it.loadAction()
+            if (handleEnable) {
+                it.enableAction()
+            }
+        }
+    }
+
+    fun registerCommand(registrar: (CommandManager<CommandSender>) -> Command<CommandSender>) {
+        if (this::commandManager.isInitialized) {
+            commandManager.command(registrar(commandManager))
+        } else {
+            commandQueue.add(registrar)
+        }
     }
 }
