@@ -31,11 +31,15 @@ command(name = "test", description = "A testing command", aliases = ["testalias"
     argument(PlayerArgument.of("player"))
 
     handler { context ->
-        schedule(delay = 60) {
+        schedule(delay = 20, period = 0) { // period is optional
             context.get<Player>("player").sendMessage("boo")
         }
-        scheduleAsync(delay = 120) {
+        scheduleAsync(delay = 40, period = 0) { // period is optional
             context.get<Player>("player").sendMessage("second boo")
+        }
+        scheduleSuspend(delay = 60, period = 0) { // period is optional
+            // this is a suspending lambda
+            context.get<Player>("player").sendMessage("third boo")
         }
     }
 }
