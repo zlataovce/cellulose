@@ -23,6 +23,8 @@ public interface Cellulose {
 
     File getScriptsFolder();
 
+    File getCompiledCacheFolder();
+
     @UnmodifiableView
     List<Object> getLoadedScripts();
 

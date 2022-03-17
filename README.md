@@ -6,6 +6,11 @@ Put a file with a `.cell.kts` extension in the plugins/Cellulose/scripts folder 
 
 **Example:**
 ```kotlin
+@file:Repository("https://repo.kcra.me/snapshots")
+@file:DependsOn("me.kcra.acetylene:srgutils:0.0.2-SNAPSHOT")
+@file:Import("other_script_in_scripts_folder.kts")
+@file:CompilerOptions("-verbose")
+
 import org.bukkit.entity.Player
 import org.bukkit.event.EventPriority
 import org.bukkit.event.player.PlayerJoinEvent

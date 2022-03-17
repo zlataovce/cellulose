@@ -13,25 +13,32 @@ import kotlin.script.experimental.annotations.KotlinScript
 )
 abstract class ScriptBase : Listener {
     protected val log: Logger = Logger.getLogger("Cellulose [${javaClass.simpleName.lowercase().replace("_cell", "")}]")
-    internal var loadAction: () -> Unit = { invokeScriptMethod("load") }
-    internal var enableAction: () -> Unit = { invokeScriptMethod("enable") }
-    internal var disableAction: () -> Unit = { invokeScriptMethod("disable") }
+
+    // don't generate getters and setters for these
+    @JvmField
+    internal var load: () -> Unit = { invokeScriptMethod("load") }
+    @JvmField
+    internal var enable: () -> Unit = { invokeScriptMethod("enable") }
+    @JvmField
+    internal var disable: () -> Unit = { invokeScriptMethod("disable") }
 
     protected fun load(block: () -> Unit) {
-        loadAction = block
+        load = block
     }
 
     protected fun enable(block: () -> Unit) {
-        enableAction = block
+        enable = block
     }
 
     protected fun disable(block: () -> Unit) {
-        disableAction = block
+        disable = block
     }
 
     private fun invokeScriptMethod(method: String, vararg args: Any) {
         try {
-            javaClass.getDeclaredMethod(method).also { it.isAccessible = true }.invoke(this, args)
+            javaClass.getDeclaredMethod(method, *args.map { it.javaClass }.toTypedArray())
+                .also { it.isAccessible = true }
+                .invoke(this, *args)
         } catch (ignored: NoSuchMethodException) {
             // ignored
         }

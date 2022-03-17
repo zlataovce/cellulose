@@ -1,7 +1,7 @@
 package me.kcra.cellulose.script.extension
 
 import kotlinx.coroutines.runBlocking
-import me.kcra.cellulose.CellulosePlugin
+import me.kcra.cellulose.CellulosePlugin.Companion.pluginContext
 import org.bukkit.scheduler.BukkitRunnable
 import org.bukkit.scheduler.BukkitTask
 
@@ -16,19 +16,12 @@ inline fun schedule(
 ): BukkitTask {
     val runnable: BukkitRunnable = bukkitRunnable(block)
 
-    return when {
-        period > 0 -> runnable.runTaskTimer(
-            CellulosePlugin.INSTANCE ?: throw UnsupportedOperationException("Tasks cannot be scheduled when Cellulose is disabled"),
-            delay,
-            period
-        )
-        delay > 0 -> runnable.runTaskLater(
-            CellulosePlugin.INSTANCE ?: throw UnsupportedOperationException("Tasks cannot be scheduled when Cellulose is disabled"),
-            delay
-        )
-        else -> runnable.runTask(
-            CellulosePlugin.INSTANCE ?: throw UnsupportedOperationException("Tasks cannot be scheduled when Cellulose is disabled")
-        )
+    pluginContext { instance ->
+        return when {
+            period > 0 -> runnable.runTaskTimer(instance, delay, period)
+            delay > 0 -> runnable.runTaskLater(instance, delay)
+            else -> runnable.runTask(instance)
+        }
     }
 }
 
@@ -39,19 +32,12 @@ inline fun scheduleAsync(
 ): BukkitTask {
     val runnable: BukkitRunnable = bukkitRunnable(block)
 
-    return when {
-        period > 0 -> runnable.runTaskTimerAsynchronously(
-            CellulosePlugin.INSTANCE ?: throw UnsupportedOperationException("Tasks cannot be scheduled when Cellulose is disabled"),
-            delay,
-            period
-        )
-        delay > 0 -> runnable.runTaskLaterAsynchronously(
-            CellulosePlugin.INSTANCE ?: throw UnsupportedOperationException("Tasks cannot be scheduled when Cellulose is disabled"),
-            delay
-        )
-        else -> runnable.runTaskAsynchronously(
-            CellulosePlugin.INSTANCE ?: throw UnsupportedOperationException("Tasks cannot be scheduled when Cellulose is disabled")
-        )
+    pluginContext { instance ->
+        return when {
+            period > 0 -> runnable.runTaskTimerAsynchronously(instance, delay, period)
+            delay > 0 -> runnable.runTaskLaterAsynchronously(instance, delay)
+            else -> runnable.runTaskAsynchronously(instance)
+        }
     }
 }
 
