@@ -1,3 +1,5 @@
+@file:Suppress("unused") // for use in scripts
+
 package me.kcra.cellulose.script.extension
 
 import kotlinx.coroutines.runBlocking
@@ -12,7 +14,7 @@ inline fun bukkitRunnable(crossinline block: BukkitRunnable.() -> Unit): BukkitR
 inline fun schedule(
     delay: Long = 0,
     period: Long = 0,
-    crossinline block: BukkitRunnable.() -> Unit
+    crossinline block: BukkitRunnable.() -> Unit,
 ): BukkitTask {
     val runnable: BukkitRunnable = bukkitRunnable(block)
 
@@ -28,7 +30,7 @@ inline fun schedule(
 inline fun scheduleAsync(
     delay: Long = 0,
     period: Long = 0,
-    crossinline block: BukkitRunnable.() -> Unit
+    crossinline block: BukkitRunnable.() -> Unit,
 ): BukkitTask {
     val runnable: BukkitRunnable = bukkitRunnable(block)
 
@@ -46,5 +48,9 @@ inline fun scheduleAsync(
 inline fun scheduleSuspend(
     delay: Long = 0,
     period: Long = 0,
-    crossinline block: suspend BukkitRunnable.() -> Unit
-): BukkitTask = scheduleAsync(delay, period) { runBlocking { block() } }
+    crossinline block: suspend BukkitRunnable.() -> Unit,
+): BukkitTask = scheduleAsync(delay, period) {
+    runBlocking {
+        block()
+    }
+}
